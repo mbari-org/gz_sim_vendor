@@ -39,6 +39,20 @@ find_package(sdformat_vendor REQUIRED)
 # if we are users are building from source (determined by the
 # GZ_BUILD_FROM_SOURCE environment variable) or if explicitly told to do so
 # by the GZ_RELAX_VERSION_MATCH environment variable.
+
+# MBARI enable python3 bindings
+set(ENV{GZ_BUILD_FROM_SOURCE} "1")
+set(PYBIND11_PYTHON_VERSION 3)
+find_package(pybind11 2.2 QUIET)
+
+if (${pybind11_FOUND})
+  message(STATUS "Searching for pybind11 - found version ${pybind11_VERSION}.")
+else()
+  message(WARNING "pybind11 is missing: Python interfaces are disabled.")
+  return()
+endif()
+
+
 set(VERSION_MATCH "EXACT")
 if(NOT $ENV{GZ_BUILD_FROM_SOURCE} STREQUAL "")
   set(VERSION_MATCH "")
@@ -51,12 +65,15 @@ endif()
 find_package(${LIB_NAME_FULL} ${VERSION_MATCH} ${LIB_VER} COMPONENTS all QUIET)
 
 ament_vendor(${LIB_NAME_UNDERSCORE}_vendor
-  SATISFIED ${${LIB_NAME_FULL}_FOUND}
+  SATISFIED FALSE  # MBARI enable python3 bindings
+  # SATISFIED ${${LIB_NAME_FULL}_FOUND}
   VCS_URL https://github.com/gazebosim/${GITHUB_NAME}.git
   VCS_VERSION ${GITHUB_NAME}${LIB_VER_MAJOR}_${LIB_VER}${LIB_VER_SUFFIX}
   CMAKE_ARGS
     -DBUILD_DOCS:BOOL=OFF
-    -DSKIP_PYBIND11:BOOL=ON
+    -DSKIP_PYBIND11:BOOL=OFF  # MBARI enable python3 bindings
+  SOURCE_SUBDIR python  # MBARI enable python3 bindings
+  PATCHES python_standalone_cmakelists.patch  # MBARI enable python3 bindings
   GLOBAL_HOOK
 )
 
